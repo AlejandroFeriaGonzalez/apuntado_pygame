@@ -27,13 +27,10 @@ def main():
 
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     screen_rect = screen.get_rect()
-    BLACK = (0, 0, 0)
-    RED = (255, 0, 0)
 
     ruta_cartas = os.path.join(main_dir, "data", "Cards")
     pygame.display.set_caption("Move Cards")
     boxes = []
-    images = []
     dict_cartas = {}
     list_rect_cartas = []
 
@@ -43,7 +40,6 @@ def main():
         object_rect = image.get_rect()
         object_rect.bottomright = (-1, -1)  # se ponen fuera del mapa
         boxes.append(object_rect)
-        images.append(image)
 
         dict_cartas[img.removesuffix(".png")] = (image, object_rect)
         list_rect_cartas.append(object_rect)
@@ -53,16 +49,16 @@ def main():
     nombre_carta_activa = None
     running = True
 
-    mano: list[tuple[pygame.Surface, pygame.Rect]] = random.sample(list(dict_cartas.items()), 10)
+    mano = None
     list_cartas_en_juego = None
 
-    i = 10
-    for clave, carta in mano:
-        carta[1].topleft = (i, 500)
-        i += 100
+    button_text = dict_cartas["backB"][0]
+    button_rect = button_text.get_rect(center=(100, 100))
+    was_pressed = False
 
     while running:
-        screen.fill(BLACK)
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        screen.fill((0, 0, 0))
         event: Event
 
         for event in pygame.event.get():
@@ -82,21 +78,30 @@ def main():
             if event.type == pygame.MOUSEMOTION:
                 if carta_activa is not None:
                     carta_activa.move_ip(event.rel)
-                    # dict_cartas[carta_activa][1].move_ip(event.rel)
 
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
-        # mostrar todas las cartas
-        # for image, rect in dict_cartas.values():
-        #     screen.blit(image, rect)
-
-        for clave, carta in mano:
-            screen.blit(carta[0], carta[1])
+        if mano:
+            for clave, carta in mano:
+                screen.blit(carta[0], carta[1])
 
         list_cartas_en_juego = screen_rect.collidelistall(list_rect_cartas)
-        # print(screen_rect.collidelistall(list_rect_cartas))
+
+        # * boton
+
+        if button_rect.collidepoint(mouse_x, mouse_y):
+            if pygame.mouse.get_pressed()[0] and not was_pressed:
+                mano = random.sample(list(dict_cartas.items())[:-2], 10)
+                i = 10
+                for clave, carta in mano:
+                    carta[1].topleft = (i, 500)
+                    i += 100
+
+        was_pressed = pygame.mouse.get_pressed()[0]
+
+        screen.blit(button_text, button_rect)
 
         pygame.display.update()
         fps.tick(20)

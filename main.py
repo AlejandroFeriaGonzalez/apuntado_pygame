@@ -42,6 +42,7 @@ class Game:
 
     def run(self):
         while True:
+            pygame.display.set_caption(f"{self.clock.get_fps() :.1f}")
             self.states[self.gameStateManager.get_state()].run()
 
 
@@ -76,10 +77,13 @@ class Mesa:
 
         self.lista_claves = list(self.dict_cartas.keys())
 
-        self.mesa_verde = pygame.Surface((SCREEN_WIDTH, 200))
-        self.mesa_verde.fill("green")
-        self.mesa_verde_rect = self.mesa_verde.get_rect()
+        # self.mesa_verde = pygame.Surface((SCREEN_WIDTH, 200))
+        # self.mesa_verde.fill("green")
+        self.mesa_verde_rect = pygame.Rect(0, 0, SCREEN_WIDTH, 200)
         self.mesa_verde_rect.topleft = (0, SCREEN_HEIGHT - 200)
+
+        self.rect_carta_a_entregar = pygame.Rect(0, 0, 80, 100)
+        self.rect_carta_a_entregar.center = 900, 300
 
         self.button_text = self.dict_cartas["backB"][0]
         self.button_rect = self.button_text.get_rect(center=(100, 100))
@@ -103,14 +107,14 @@ class Mesa:
                     for mano in self.manos_jugadores:
                         for clave, carta in mano:
                             carta[1].bottomright = (-1, -1)
-
                 cartas_a_repartir = random.sample(list(self.dict_cartas.items())[:-2], 10 * self.num_jugadores)
+
                 for i in range(0, len(cartas_a_repartir), 10):
                     self.manos_jugadores.append(cartas_a_repartir[i: i + 10])  # 0-9, 10-19, 20-39
 
                 # self.mano = random.sample(list(self.dict_cartas.items())[:-2], 10)
-                self.mano = self.manos_jugadores[self.index]
-                self.posicionar_cartas()
+                self.mano: list = self.manos_jugadores[self.index]
+                self.posicionar_cartas_mano()
 
         self.was_pressed = pygame.mouse.get_pressed()[0]
 
@@ -125,11 +129,30 @@ class Mesa:
             if keys[pygame.K_SPACE]:
                 self.game.gameStateManager.set_state("start")
             if keys[pygame.K_RIGHT]:
-                for clave, carta in self.mano:  # sacar a las anteriores antes de poner las nuevas
-                    carta[1].bottomright = (-1, -1)
-                self.index += 1
-                self.mano = self.manos_jugadores[self.index % self.num_jugadores]
-                self.posicionar_cartas()
+                if self.mano:
+                    # actualizar mano
+                    self.mano.clear()
+                    # colisiona con mesa
+                    list_cartas_en_mesa = self.mesa_verde_rect.collidelistall(self.list_rect_cartas)
+                    for num_carta in list_cartas_en_mesa:
+                        nomble_clave_carta = self.lista_claves[num_carta]
+                        self.mano.append([nomble_clave_carta, self.dict_cartas[nomble_clave_carta]])
+                    #     print(nomble_clave_carta, end=", ")  # rect
+                    # print(self.mano)
+
+                    for clave, carta in self.mano:  # sacar a las anteriores antes de poner las nuevas
+                        carta[1].bottomright = (-1, -1)
+                    self.index += 1
+                    self.mano = self.manos_jugadores[self.index % self.num_jugadores]
+                    # agregar carta extra
+                    num_carta_entregada = self.rect_carta_a_entregar.collidelist(self.list_rect_cartas)
+                    if num_carta_entregada != -1:
+                        print(num_carta_entregada)
+                        nomble_clave_carta = self.lista_claves[num_carta_entregada]
+                        self.mano.append([nomble_clave_carta, self.dict_cartas[nomble_clave_carta]])
+                    self.posicionar_cartas_mano()
+                    # print(self.mano)
+                    # c.center = 200, 200
 
             if event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
@@ -143,18 +166,22 @@ class Mesa:
                 pygame.quit()
                 sys.exit()
 
-    def posicionar_cartas(self):
+    def posicionar_cartas_mano(self):
         i = 10
         for clave, carta in self.mano:
             carta[1].topleft = (i, 500)
             i += 100
 
     def uptade(self):
+
         self.game.screen.fill((0, 0, 0))
-        self.game.screen.blit(self.mesa_verde, self.mesa_verde_rect)
+        pygame.draw.rect(self.game.screen, "green", self.mesa_verde_rect)
+        pygame.draw.rect(self.game.screen, "green", self.rect_carta_a_entregar)
 
         self.list_rect_cartas_en_juego = self.game.screen_rect.collideobjectsall(self.list_rect_cartas)
 
+        c = self.rect_carta_a_entregar.collideobjects(self.list_rect_cartas)
+        # print(c)
         # * ver nombre de las cartas en el cuadro verde
         # list_cartas_en_mesa = self.mesa_verde_rect.collidelistall(self.list_rect_cartas)
         # for num_carta in list_cartas_en_mesa:

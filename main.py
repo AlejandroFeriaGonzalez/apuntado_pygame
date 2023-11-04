@@ -58,6 +58,7 @@ class GameStateManager:
 
 class Mesa:
     def __init__(self, game: Game):
+        self.num_jugadores = 4
         self.game = game
 
         self.list_rect_cartas = []
@@ -91,33 +92,44 @@ class Mesa:
         self.list_rect_cartas_en_juego = None
 
         self.manos_jugadores = []
+        self.index = 0
 
     def check_events(self):
         mouse_x, mouse_y = pygame.mouse.get_pos()
         # cuando toca la carta volteada da una mano random
         if self.button_rect.collidepoint(mouse_x, mouse_y):
             if pygame.mouse.get_pressed()[0] and not self.was_pressed:
-                if self.mano:  # envia la cartas que estaban antes fuera del mapa
-                    for clave, carta in self.mano:
-                        carta[1].bottomright = (-1, -1)
+                if self.manos_jugadores:  # envia la cartas que estaban antes fuera del mapa
+                    for mano in self.manos_jugadores:
+                        for clave, carta in mano:
+                            carta[1].bottomright = (-1, -1)
 
-                self.mano = random.sample(list(self.dict_cartas.items())[:-2], 10)
-                i = 10
-                for clave, carta in self.mano:
-                    carta[1].topleft = (i, 500)
-                    i += 100
+                cartas_a_repartir = random.sample(list(self.dict_cartas.items())[:-2], 10 * self.num_jugadores)
+                for i in range(0, len(cartas_a_repartir), 10):
+                    self.manos_jugadores.append(cartas_a_repartir[i: i + 10])  # 0-9, 10-19, 20-39
+
+                # self.mano = random.sample(list(self.dict_cartas.items())[:-2], 10)
+                self.mano = self.manos_jugadores[self.index]
+                self.posicionar_cartas()
 
         self.was_pressed = pygame.mouse.get_pressed()[0]
 
         for event in pygame.event.get():
+            keys = pygame.key.get_pressed()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     for carta in self.list_rect_cartas_en_juego:
                         if carta.collidepoint(event.pos):
                             self.carta_activa = carta
 
-            if event.type == pygame.KEYDOWN:
+            if keys[pygame.K_SPACE]:
                 self.game.gameStateManager.set_state("start")
+            if keys[pygame.K_RIGHT]:
+                for clave, carta in self.mano:  # sacar a las anteriores antes de poner las nuevas
+                    carta[1].bottomright = (-1, -1)
+                self.index += 1
+                self.mano = self.manos_jugadores[self.index % self.num_jugadores]
+                self.posicionar_cartas()
 
             if event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
@@ -130,6 +142,12 @@ class Mesa:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+
+    def posicionar_cartas(self):
+        i = 10
+        for clave, carta in self.mano:
+            carta[1].topleft = (i, 500)
+            i += 100
 
     def uptade(self):
         self.game.screen.fill((0, 0, 0))

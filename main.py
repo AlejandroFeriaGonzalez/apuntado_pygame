@@ -84,23 +84,38 @@ class Mesa:
         self.button_rect = self.button_text.get_rect(center=(100, 100))
         self.was_pressed = False
 
-        self.lista_claves = list(self.dict_cartas.keys())
         self.carta_activa = None
         self.nombre_carta_activa = None
 
         self.mano = None
-        self.list_cartas_en_juego = None
+        self.list_rect_cartas_en_juego = None
+
+        self.manos_jugadores = []
 
     def check_events(self):
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        # cuando toca la carta volteada da una mano random
+        if self.button_rect.collidepoint(mouse_x, mouse_y):
+            if pygame.mouse.get_pressed()[0] and not self.was_pressed:
+                if self.mano:  # envia la cartas que estaban antes fuera del mapa
+                    for clave, carta in self.mano:
+                        carta[1].bottomright = (-1, -1)
+
+                self.mano = random.sample(list(self.dict_cartas.items())[:-2], 10)
+                i = 10
+                for clave, carta in self.mano:
+                    carta[1].topleft = (i, 500)
+                    i += 100
+
+        self.was_pressed = pygame.mouse.get_pressed()[0]
+
         for event in pygame.event.get():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
-                    for num_carta in self.list_cartas_en_juego:
-                        self.nombre_carta_activa = self.lista_claves[num_carta]
-                        carta = self.dict_cartas[self.nombre_carta_activa][1]  # rect
+                    for carta in self.list_rect_cartas_en_juego:
                         if carta.collidepoint(event.pos):
                             self.carta_activa = carta
-                            # print(nombre_carta_activa)
+
             if event.type == pygame.KEYDOWN:
                 self.game.gameStateManager.set_state("start")
 
@@ -120,33 +135,18 @@ class Mesa:
         self.game.screen.fill((0, 0, 0))
         self.game.screen.blit(self.mesa_verde, self.mesa_verde_rect)
 
-        self.list_cartas_en_juego = self.game.screen_rect.collidelistall(self.list_rect_cartas)
+        self.list_rect_cartas_en_juego = self.game.screen_rect.collideobjectsall(self.list_rect_cartas)
 
-        list_cartas_en_mesa = self.mesa_verde_rect.collidelistall(self.list_rect_cartas)
-        for num_carta in list_cartas_en_mesa:
-            self.nombre_carta_activa = self.lista_claves[num_carta]
+        # * ver nombre de las cartas en el cuadro verde
+        # list_cartas_en_mesa = self.mesa_verde_rect.collidelistall(self.list_rect_cartas)
+        # for num_carta in list_cartas_en_mesa:
+        #     self.nombre_carta_activa = self.lista_claves[num_carta]
         #     print(self.nombre_carta_activa, end=", ")  # rect
         # print()
 
         if self.mano:
             for clave, carta in self.mano:
                 self.game.screen.blit(carta[0], carta[1])
-
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        if self.button_rect.collidepoint(mouse_x, mouse_y):
-            if pygame.mouse.get_pressed()[0] and not self.was_pressed:
-
-                if self.mano:
-                    for clave, carta in self.mano:
-                        carta[1].bottomright = (-1, -1)
-
-                self.mano = random.sample(list(self.dict_cartas.items())[:-2], 10)
-                i = 10
-                for clave, carta in self.mano:
-                    carta[1].topleft = (i, 500)
-                    i += 100
-
-        self.was_pressed = pygame.mouse.get_pressed()[0]
 
         self.game.screen.blit(self.button_text, self.button_rect)
 
@@ -205,5 +205,5 @@ class Start:
 
 
 if __name__ == "__main__":
-    game = Game()
-    game.run()
+    mygame = Game()
+    mygame.run()

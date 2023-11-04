@@ -59,6 +59,9 @@ class GameStateManager:
 
 class Mesa:
     def __init__(self, game: Game):
+        self.carta_de_mazo = None
+        self.cartas_repartidas = None
+        self.tecla_presionada = False
         self.carta_entregada = None
         self.num_jugadores = 4
         self.game = game
@@ -101,28 +104,43 @@ class Mesa:
 
     def check_events(self):
         mouse_x, mouse_y = pygame.mouse.get_pos()
+        keys = pygame.key.get_pressed()
         # cuando toca la carta volteada da una mano random
-        if self.button_rect.collidepoint(mouse_x, mouse_y):
+        if self.button_rect.collidepoint(mouse_x, mouse_y):  # tomar carta del mazo
             if pygame.mouse.get_pressed()[0] and not self.was_pressed:
-                if self.manos_jugadores:  # envia la cartas que estaban antes fuera del mapa
-                    for mano in self.manos_jugadores:
-                        for clave, carta in mano:
-                            carta[1].bottomright = (-1, -1)
 
-                cartas_a_repartir = random.sample(list(self.dict_cartas.keys())[:-2], 10 * self.num_jugadores)
-                for i in range(0, len(cartas_a_repartir), 10):
-                    d = {}
-                    for c in cartas_a_repartir[i: i + 10]:
-                        d[c] = self.dict_cartas[c]
-                    self.manos_jugadores.append(d)
-
-                self.mano = self.manos_jugadores[self.index]
-                self.posicionar_cartas_mano()
+                if self.cartas_repartidas:
+                    while True:
+                        nueva_carta = random.choice(self.lista_claves[:-2])
+                        if nueva_carta in self.cartas_repartidas:
+                            continue
+                        self.carta_de_mazo = self.dict_cartas[nueva_carta]  # suf y rect de la carta entregada
+                        self.carta_de_mazo[1].center = 200, 200
+                        break
 
         self.was_pressed = pygame.mouse.get_pressed()[0]
 
+        if keys[pygame.K_n]:
+            if not self.tecla_presionada:
+                if self.manos_jugadores:  # envia la cartas que estaban antes fuera del mapa
+                    for mano in self.manos_jugadores:
+                        for clave in mano:
+                            self.dict_cartas[clave][1].bottomright = -1, -1
+
+                self.manos_jugadores.clear()
+                self.cartas_repartidas = random.sample(self.lista_claves[:-2], 10 * self.num_jugadores)
+                for i in range(0, len(self.cartas_repartidas), 10):
+                    d = {}
+                    for c in self.cartas_repartidas[i: i + 10]:
+                        d[c] = self.dict_cartas[c]
+                    self.manos_jugadores.append(d)  # lista de diccionarios
+
+                self.mano = self.manos_jugadores[0]
+                self.posicionar_cartas_mano()
+
+        self.tecla_presionada = keys[pygame.K_n]
+
         for event in pygame.event.get():
-            keys = pygame.key.get_pressed()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     for carta in self.list_rect_cartas_en_juego:
@@ -157,6 +175,11 @@ class Mesa:
                         self.carta_entregada = self.dict_cartas[nomble_clave_carta]  # suf y rect de la carta entregada
                         self.carta_entregada[1].center = 100, 300
                     self.posicionar_cartas_mano()
+
+                # la carta tomada del mazo si no fue seleccionada se va fuera
+                if self.carta_de_mazo:
+                    if not self.mesa_verde_rect.colliderect(self.carta_de_mazo[1]):
+                        self.carta_de_mazo[1].bottomright = -1, -1
 
             if event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
@@ -198,6 +221,9 @@ class Mesa:
 
         if self.carta_entregada:
             self.game.screen.blit(self.carta_entregada[0], self.carta_entregada[1])
+
+        if self.carta_de_mazo:
+            self.game.screen.blit(self.carta_de_mazo[0], self.carta_de_mazo[1])
 
         self.game.screen.blit(self.button_text, self.button_rect)
 

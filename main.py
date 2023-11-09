@@ -63,7 +63,7 @@ class Mesa:
         self.cartas_repartidas = None
         self.tecla_presionada = False
         self.carta_entregada = None
-        self.num_jugadores = 5
+        self.num_jugadores = 2
         self.game = game
 
         self.list_rect_cartas = []
@@ -165,23 +165,20 @@ class Mesa:
 
                     self.index += 1
                     self.mano = self.manos_jugadores[self.index % self.num_jugadores]
-
-                    # agregar carta extra, # saca la anterior
-                    if self.carta_entregada and not self.rect_carta_a_entregar.colliderect(self.carta_entregada[1]):
-                        self.carta_entregada[1].bottomright = -1, -1
-
-                    num_carta_entregada = self.rect_carta_a_entregar.collidelist(self.list_rect_cartas)
-                    if num_carta_entregada != -1:
-                        nomble_clave_carta = self.lista_claves[num_carta_entregada]
-                        self.carta_entregada = self.dict_cartas[nomble_clave_carta]
-                        self.carta_entregada[1].center = 100, 300
-
                     self.posicionar_cartas_mano()  # cambia las cartas de la mano
 
-                # se esta moviendo antes de verificar
+                # agregar carta extra, # saca la anterior
+                if self.carta_entregada and not self.rect_carta_a_entregar.colliderect(self.carta_entregada[1]):
+                    self.carta_entregada[1].bottomright = -1, -1
+
+                num_carta_entregada = self.rect_carta_a_entregar.collidelist(self.list_rect_cartas)
+                if num_carta_entregada != -1:
+                    nomble_clave_carta = self.lista_claves[num_carta_entregada]
+                    self.carta_entregada = self.dict_cartas[nomble_clave_carta]
+                    self.carta_entregada[1].center = 100, 300
 
                 # la carta tomada del mazo si no fue seleccionada se va fuera
-                if self.carta_de_mazo != self.carta_entregada:
+                if self.carta_de_mazo != self.carta_entregada and self.carta_de_mazo not in self.mano.values():
                     self.carta_de_mazo[1].bottomright = -1, -1
 
             if event.type == pygame.MOUSEBUTTONUP:

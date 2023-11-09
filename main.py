@@ -168,8 +168,10 @@ class Mesa:
                     self.posicionar_cartas_mano()  # cambia las cartas de la mano
 
                 # agregar carta extra, # saca la anterior
-                if self.carta_entregada and not self.rect_carta_a_entregar.colliderect(self.carta_entregada[1]):
-                    self.carta_entregada[1].bottomright = -1, -1
+                if (self.carta_entregada  # si existe
+                        and not self.rect_carta_a_entregar.colliderect(self.carta_entregada[1])  # si no se entraga
+                        and self.carta_entregada not in self.mano.values()):  # si no esta en la mano
+                    self.carta_entregada[1].bottomright = -1, -1  # la saca
 
                 num_carta_entregada = self.rect_carta_a_entregar.collidelist(self.list_rect_cartas)
                 if num_carta_entregada != -1:
@@ -221,6 +223,7 @@ class Mesa:
 
         if self.carta_entregada:
             self.game.screen.blit(self.carta_entregada[0], self.carta_entregada[1])
+            print(self.carta_entregada[1].x, self.carta_entregada[1].x)
 
         if self.carta_de_mazo:
             self.game.screen.blit(self.carta_de_mazo[0], self.carta_de_mazo[1])

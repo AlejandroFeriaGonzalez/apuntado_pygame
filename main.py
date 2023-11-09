@@ -264,9 +264,6 @@ class Start:
                 pygame.quit()
                 sys.exit()
 
-            if event.type == pygame.KEYDOWN:
-                self.game.gameStateManager.set_state('mesa')
-
     def uptade(self):
         self.game.screen.fill((0, 0, 0))
 

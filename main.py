@@ -181,7 +181,6 @@ class Mesa:
                 # se esta moviendo antes de verificar
 
                 # la carta tomada del mazo si no fue seleccionada se va fuera
-                print(self.carta_de_mazo, self.carta_entregada)
                 if self.carta_de_mazo != self.carta_entregada:
                     self.carta_de_mazo[1].bottomright = -1, -1
 
@@ -227,9 +226,7 @@ class Mesa:
             self.game.screen.blit(self.carta_entregada[0], self.carta_entregada[1])
 
         if self.carta_de_mazo:
-            # print(self.carta_de_mazo[1].x, self.carta_de_mazo[1].y)
             self.game.screen.blit(self.carta_de_mazo[0], self.carta_de_mazo[1])
-            # print(not self.rect_carta_a_entregar.colliderect(self.carta_de_mazo[1]))
 
         self.game.screen.blit(self.button_text, self.button_rect)
 

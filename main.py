@@ -63,7 +63,7 @@ class Mesa:
         self.cartas_repartidas = None
         self.tecla_presionada = False
         self.carta_entregada = None
-        self.num_jugadores = 4
+        self.num_jugadores = 5
         self.game = game
 
         self.list_rect_cartas = []
@@ -116,6 +116,7 @@ class Mesa:
                             continue
                         self.carta_de_mazo = self.dict_cartas[nueva_carta]  # suf y rect de la carta entregada
                         self.carta_de_mazo[1].center = 200, 200
+                        # print(self.carta_de_mazo[1].x, self.carta_de_mazo[1].y)
                         break
 
         self.was_pressed = pygame.mouse.get_pressed()[0]
@@ -165,21 +166,24 @@ class Mesa:
                     self.index += 1
                     self.mano = self.manos_jugadores[self.index % self.num_jugadores]
 
-                    # agregar carta extra
-                    if self.carta_entregada:  # saca la anterior
+                    # agregar carta extra, # saca la anterior
+                    if self.carta_entregada and not self.rect_carta_a_entregar.colliderect(self.carta_entregada[1]):
                         self.carta_entregada[1].bottomright = -1, -1
 
                     num_carta_entregada = self.rect_carta_a_entregar.collidelist(self.list_rect_cartas)
                     if num_carta_entregada != -1:
                         nomble_clave_carta = self.lista_claves[num_carta_entregada]
-                        self.carta_entregada = self.dict_cartas[nomble_clave_carta]  # suf y rect de la carta entregada
+                        self.carta_entregada = self.dict_cartas[nomble_clave_carta]
                         self.carta_entregada[1].center = 100, 300
-                    self.posicionar_cartas_mano()
+
+                    self.posicionar_cartas_mano()  # cambia las cartas de la mano
+
+                # se esta moviendo antes de verificar
 
                 # la carta tomada del mazo si no fue seleccionada se va fuera
-                if self.carta_de_mazo:
-                    if not self.mesa_verde_rect.colliderect(self.carta_de_mazo[1]):
-                        self.carta_de_mazo[1].bottomright = -1, -1
+                print(self.carta_de_mazo, self.carta_entregada)
+                if self.carta_de_mazo != self.carta_entregada:
+                    self.carta_de_mazo[1].bottomright = -1, -1
 
             if event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
@@ -223,7 +227,9 @@ class Mesa:
             self.game.screen.blit(self.carta_entregada[0], self.carta_entregada[1])
 
         if self.carta_de_mazo:
+            # print(self.carta_de_mazo[1].x, self.carta_de_mazo[1].y)
             self.game.screen.blit(self.carta_de_mazo[0], self.carta_de_mazo[1])
+            # print(not self.rect_carta_a_entregar.colliderect(self.carta_de_mazo[1]))
 
         self.game.screen.blit(self.button_text, self.button_rect)
 

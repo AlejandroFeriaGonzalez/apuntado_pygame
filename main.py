@@ -116,7 +116,6 @@ class Mesa:
                             continue
                         self.carta_de_mazo = self.dict_cartas[nueva_carta]  # suf y rect de la carta entregada
                         self.carta_de_mazo[1].center = 200, 200
-                        # print(self.carta_de_mazo[1].x, self.carta_de_mazo[1].y)
                         break
 
         self.was_pressed = pygame.mouse.get_pressed()[0]
@@ -147,6 +146,14 @@ class Mesa:
                     for carta in self.list_rect_cartas_en_juego:
                         if carta.collidepoint(event.pos):
                             self.carta_activa = carta
+
+            if event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:
+                    self.carta_activa = None
+
+            if event.type == pygame.MOUSEMOTION:
+                if self.carta_activa is not None:
+                    self.carta_activa.move_ip(event.rel)
 
             if keys[pygame.K_SPACE]:
                 self.game.gameStateManager.set_state("start")
@@ -180,16 +187,9 @@ class Mesa:
                     self.carta_entregada[1].center = 100, 300
 
                 # la carta tomada del mazo si no fue seleccionada se va fuera
-                if self.carta_de_mazo != self.carta_entregada and self.carta_de_mazo not in self.mano.values():
+                if (self.carta_de_mazo and self.carta_de_mazo != self.carta_entregada and
+                        self.carta_de_mazo not in self.mano.values()):
                     self.carta_de_mazo[1].bottomright = -1, -1
-
-            if event.type == pygame.MOUSEBUTTONUP:
-                if event.button == 1:
-                    self.carta_activa = None
-
-            if event.type == pygame.MOUSEMOTION:
-                if self.carta_activa is not None:
-                    self.carta_activa.move_ip(event.rel)
 
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -223,7 +223,6 @@ class Mesa:
 
         if self.carta_entregada:
             self.game.screen.blit(self.carta_entregada[0], self.carta_entregada[1])
-            print(self.carta_entregada[1].x, self.carta_entregada[1].x)
 
         if self.carta_de_mazo:
             self.game.screen.blit(self.carta_de_mazo[0], self.carta_de_mazo[1])

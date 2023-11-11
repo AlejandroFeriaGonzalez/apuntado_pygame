@@ -1,10 +1,12 @@
 import os
 import random
 import sys
+from itertools import chain
 
 import pygame
 
 from GLOBAL import *
+from funciones import es_combinacion_valida
 
 # ('C:\\Users\\Alejandro Feria\\PycharmProjects\\apuntado', 'main.py')
 main_dir = os.path.split(os.path.abspath(__file__))[0]
@@ -109,6 +111,7 @@ class Mesa:
         self.list_rect_cartas_en_juego = None
 
         self.manos_jugadores = []
+        self.puntos_jugadores = [0] * self.num_jugadores
         self.index = 0
 
     def check_events(self):
@@ -127,7 +130,7 @@ class Mesa:
                         break
 
             if self.rect_texto_ganer.collidepoint(mouse_x, mouse_y):
-                print("cambio de ventana")
+                self.actualizar_mano()
                 self.game.gameStateManager.set_state("ganar")
 
         self.was_pressed = pygame.mouse.get_pressed()[0]
@@ -172,14 +175,11 @@ class Mesa:
 
     def siguiente_mano(self):
         # actualizar mano
-        self.mano.clear()
-        # si la carta no esta en la mesa la saca
-        list_cartas_en_mesa = self.mesa_verde_rect.collidelistall(self.list_rect_cartas)
-        for num_carta in list_cartas_en_mesa:
-            nomble_clave_carta = self.lista_claves[num_carta]
-            self.mano[nomble_clave_carta] = self.dict_cartas[nomble_clave_carta]
+        self.actualizar_mano()
+
         for clave in self.mano:  # sacar a las anteriores antes de poner las nuevas
             self.dict_cartas[clave][1].bottomright = (-1, -1)
+
         self.index += 1
         self.mano = self.manos_jugadores[self.index % self.num_jugadores]
         self.posicionar_cartas_mano()  # cambia las cartas de la mano
@@ -198,6 +198,15 @@ class Mesa:
         if (self.carta_de_mazo and self.carta_de_mazo != self.carta_entregada and
                 self.carta_de_mazo not in self.mano.values()):
             self.carta_de_mazo[1].bottomright = -1, -1
+
+    def actualizar_mano(self):
+        self.mano.clear()
+        # si la carta no esta en la mesa la saca
+        list_cartas_en_mesa = self.mesa_verde_rect.collidelistall(self.list_rect_cartas)
+        for num_carta in list_cartas_en_mesa:
+            nomble_clave_carta = self.lista_claves[num_carta]
+            self.mano[nomble_clave_carta] = self.dict_cartas[nomble_clave_carta]
+
 
     def mover_carta(self, event):
         # mover cualquier carta
@@ -259,6 +268,7 @@ class Mesa:
 
 class Ganar:
     def __init__(self, game: Game, mesa: Mesa):
+        self.cartas_sin_usar = None
         self.K_RIGHT_presionada = False
         self.was_pressed = False
         self.game = game
@@ -271,14 +281,23 @@ class Ganar:
         self.font = pygame.font.SysFont("impact", 30)
         self.surf_texto_comprobar = self.font.render("comprobar", True, "white")
         self.rect_texto_comprobar = self.surf_texto_comprobar.get_rect()
-        self.rect_texto_comprobar.center = (900, self.game.screen_rect.height - 200)
+        self.rect_texto_comprobar.center = (900, self.game.screen_rect.height - 250)
+
+        self.surf_texto_entregar = self.font.render("Entregar", True, "white")
+        self.rect_texto_entregar = self.surf_texto_entregar.get_rect()
+        self.rect_texto_entregar.center = (900, self.game.screen_rect.height - 200)
 
         widht_espacios = 700
         height_espacios = 100
         self.espacios = [
             pygame.Rect(0, 0, widht_espacios, height_espacios),
             pygame.Rect(0, 0, widht_espacios, height_espacios),
-            pygame.Rect(0, 0, widht_espacios, height_espacios)]
+            pygame.Rect(0, 0, widht_espacios, height_espacios)
+        ]
+
+        self.color_espacios = ["red", "red", "red"]
+
+        self.lista_cartas_en_espacios_verdes = []
 
         y = 50
         for espacio in self.espacios:
@@ -300,19 +319,47 @@ class Ganar:
             self.game.gameStateManager.set_state("mesa")
 
         if keys[pygame.K_RIGHT] and not self.K_RIGHT_presionada:
+            self.lista_cartas_en_espacios_verdes.clear()
+            self.color_espacios = ["red", "red", "red"]
             self.siguiente_mano()
 
         self.K_RIGHT_presionada = keys[pygame.K_RIGHT]
 
+        # logica boton de comprobar
         if self.rect_texto_comprobar.collidepoint(mouse_x, mouse_y):
             self.surf_texto_comprobar = self.font.render("comprobar", True, "blue")
 
-            if pygame.mouse.get_pressed()[0] and not self.was_pressed:
+            if pygame.mouse.get_pressed()[0] and not self.was_pressed:  # da click en comprobar
                 self.cartas_en_espacios()
-                print(self.lista_cartas_en_espacios)
-
+                for i, cartas_en_espacio in enumerate(self.lista_cartas_en_espacios):
+                    if es_combinacion_valida(cartas_en_espacio):
+                        self.color_espacios[i] = "green"
+                    else:
+                        self.color_espacios[i] = "red"
         else:
             self.surf_texto_comprobar = self.font.render("comprobar", True, "white")
+
+        # logica de boton de enviar, actualiza tabla
+        if self.rect_texto_entregar.collidepoint(mouse_x, mouse_y):
+            self.surf_texto_entregar = self.font.render("Entregar", True, "blue")
+            if pygame.mouse.get_pressed()[0] and not self.was_pressed:  # da click en comprobar
+                self.cartas_en_espacios()
+                self.lista_cartas_en_espacios_verdes.clear()
+                for i, cartas_en_espacio in enumerate(self.lista_cartas_en_espacios):
+                    if es_combinacion_valida(cartas_en_espacio):
+                        self.color_espacios[i] = "green"
+                        self.lista_cartas_en_espacios_verdes.append(self.espacios[i])
+                    else:
+                        self.color_espacios[i] = "red"
+
+                # if all(x == "green" for x in self.color_espacios):
+
+                lista_plana = set(chain.from_iterable(self.lista_cartas_en_espacios_verdes))
+                self.cartas_sin_usar = set(self.mesa.mano) - lista_plana
+                print(lista_plana, self.cartas_sin_usar)
+
+        else:
+            self.surf_texto_entregar = self.font.render("Entregar", True, "white")
 
         self.was_pressed = pygame.mouse.get_pressed()[0]
 
@@ -347,7 +394,7 @@ class Ganar:
                 self.carta_activa.move_ip(event.rel)
 
     def cartas_en_espacios(self):
-
+        # actualiza self.lista_cartas_en_espacios
         self.lista_cartas_en_espacios = []
         for i, espacio in enumerate(self.espacios):
             lista = []
@@ -363,8 +410,9 @@ class Ganar:
         self.list_rect_cartas_en_juego = self.game.screen_rect.collideobjectsall(self.mesa.list_rect_cartas)
 
         self.game.screen.blit(self.surf_texto_comprobar, self.rect_texto_comprobar)
-        for espacio in self.espacios:
-            pygame.draw.rect(self.game.screen, "red", espacio)
+        self.game.screen.blit(self.surf_texto_entregar, self.rect_texto_entregar)
+        for i, espacio in enumerate(self.espacios):
+            pygame.draw.rect(self.game.screen, self.color_espacios[i], espacio)
 
         if self.mesa.mano:
             for clave in self.mesa.mano:

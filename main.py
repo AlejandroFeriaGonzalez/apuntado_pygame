@@ -66,7 +66,7 @@ class Mesa:
         self.tecla_N_presionada = False
         self.tecla_right_presionada = False
         self.carta_entregada = None
-        self.num_jugadores = 2
+        self.num_jugadores = 4
         self.game = game
 
         self.list_rect_cartas = []
@@ -259,10 +259,12 @@ class Mesa:
 
 class Ganar:
     def __init__(self, game: Game, mesa: Mesa):
+        self.K_RIGHT_presionada = False
         self.was_pressed = False
         self.game = game
         self.mesa = mesa
         self.carta_activa = None
+        self.list_rect_cartas_en_juego = None
 
         self.lista_cartas_en_espacios: list[list] = []
 
@@ -297,6 +299,11 @@ class Ganar:
             self.mesa.posicionar_cartas_mano()
             self.game.gameStateManager.set_state("mesa")
 
+        if keys[pygame.K_RIGHT] and not self.K_RIGHT_presionada:
+            self.siguiente_mano()
+
+        self.K_RIGHT_presionada = keys[pygame.K_RIGHT]
+
         if self.rect_texto_comprobar.collidepoint(mouse_x, mouse_y):
             self.surf_texto_comprobar = self.font.render("comprobar", True, "blue")
 
@@ -316,10 +323,20 @@ class Ganar:
                 pygame.quit()
                 sys.exit()
 
+    def siguiente_mano(self):
+        # si la carta no esta en la mesa la saca
+        # list_cartas_en_mesa = self.mesa.mesa_verde_rect.collidelistall(self.mesa.list_rect_cartas)
+
+        for clave in self.mesa.mano:  # sacar a las anteriores antes de poner las nuevas
+            self.mesa.dict_cartas[clave][1].bottomright = (-1, -1)
+        self.mesa.index += 1
+        self.mesa.mano = self.mesa.manos_jugadores[self.mesa.index % self.mesa.num_jugadores]
+        self.posicionar_cartas_mano()  # cambia las cartas de la mano
+
     def mover_carta(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
-                for carta in self.mesa.list_rect_cartas_en_juego:
+                for carta in self.list_rect_cartas_en_juego:
                     if carta.collidepoint(event.pos):
                         self.carta_activa = carta
         if event.type == pygame.MOUSEBUTTONUP:
@@ -342,6 +359,8 @@ class Ganar:
 
     def uptade(self):
         self.game.screen.fill((0, 0, 0))
+        # lista de rects
+        self.list_rect_cartas_en_juego = self.game.screen_rect.collideobjectsall(self.mesa.list_rect_cartas)
 
         self.game.screen.blit(self.surf_texto_comprobar, self.rect_texto_comprobar)
         for espacio in self.espacios:

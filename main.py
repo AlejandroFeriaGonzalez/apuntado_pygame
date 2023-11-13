@@ -63,13 +63,15 @@ class GameStateManager:
 
 class Mesa:
     def __init__(self, game: Game):
+        self.game = game
         self.carta_de_mazo = None
         self.cartas_repartidas = None
         self.tecla_N_presionada = False
         self.tecla_right_presionada = False
         self.carta_entregada = None
         self.num_jugadores = 4
-        self.game = game
+        self.jugador_actual = 0
+        self.num_jugador_que_termino_ronda = None
 
         self.list_rect_cartas = []
         self.dict_cartas = {}
@@ -125,16 +127,11 @@ class Mesa:
         if pygame.mouse.get_pressed()[0] and not self.was_pressed:  # cuando toca la carta volteada da una mano random
             if self.rect_boton_carta.collidepoint(mouse_x, mouse_y):  # tomar carta del mazo
                 if self.cartas_repartidas:
-                    while True:
-                        nueva_carta = random.choice(self.lista_claves[:-2])
-                        if nueva_carta in self.cartas_repartidas:
-                            continue
-                        self.carta_de_mazo = self.dict_cartas[nueva_carta]  # suf y rect de la carta entregada
-                        self.carta_de_mazo[1].center = 200, 200
-                        break
+                    self.tomar_carta_de_mazo()
 
             if self.rect_texto_ganer.collidepoint(mouse_x, mouse_y):
                 self.actualizar_mano()
+                self.num_jugador_que_termino_ronda = self.jugador_actual
                 self.game.gameStateManager.set_state("ganar")
 
             if self.rect_texto_tabla.collidepoint(mouse_x, mouse_y):
@@ -164,6 +161,15 @@ class Mesa:
 
         self.tecla_right_presionada = keys[pygame.K_RIGHT]
 
+    def tomar_carta_de_mazo(self):
+        while True:
+            nueva_carta = random.choice(self.lista_claves[:-2])
+            if nueva_carta in self.cartas_repartidas:
+                continue
+            self.carta_de_mazo = self.dict_cartas[nueva_carta]  # suf y rect de la carta entregada
+            self.carta_de_mazo[1].center = 200, 200
+            break
+
     def nuevo_juego(self):
         if self.manos_jugadores:  # envia la cartas que estaban antes fuera del mapa
             for mano in self.manos_jugadores:
@@ -187,7 +193,8 @@ class Mesa:
             self.dict_cartas[clave][1].bottomright = (-1, -1)
 
         self.index += 1
-        self.mano = self.manos_jugadores[self.index % self.num_jugadores]
+        self.jugador_actual = self.index % self.num_jugadores
+        self.mano = self.manos_jugadores[self.jugador_actual]
         self.posicionar_cartas_mano()  # cambia las cartas de la mano
         # agregar carta extra, # saca la anterior
         if (self.carta_entregada  # si existe
@@ -276,10 +283,10 @@ class Ganar:
     def __init__(self, game: Game, mesa: Mesa):
         self.game = game
         self.mesa = mesa
-        self.jugador_que_termino_ronda = None
         self.cartas_sin_usar = None
         self.K_RIGHT_presionada = False
         self.was_pressed = False
+        self.forma_de_ganar = None  # toco | gano  # forma en que gano el jugador
 
         self.carta_activa = None
         self.list_rect_cartas_en_juego = None
@@ -352,28 +359,47 @@ class Ganar:
         if self.rect_texto_entregar.collidepoint(mouse_x, mouse_y):
             self.surf_texto_entregar = self.font.render("Entregar", True, "blue")
             if pygame.mouse.get_pressed()[0] and not self.was_pressed:  # da click en comprobar
+
                 self.cartas_en_espacios()
                 self.lista_cartas_en_espacios_verdes.clear()
                 for i, cartas_en_espacio in enumerate(self.lista_cartas_en_espacios):
+                    # colorear espacios
                     if es_combinacion_valida(cartas_en_espacio):
                         self.color_espacios[i] = "green"
                         self.lista_cartas_en_espacios_verdes.append(cartas_en_espacio)  # '8D2', '5S', '7C
                     else:
                         self.color_espacios[i] = "red"
 
-                # if all(x == "green" for x in self.color_espacios):
+                if self.mesa.jugador_actual == self.mesa.num_jugador_que_termino_ronda:
+                    if all(x == "green" for x in self.color_espacios):
+                        print("gano")  # ningun jugador puede tomar otra carta
+                        self.forma_de_ganar = "gano"
+                    elif len(list(chain.from_iterable(self.lista_cartas_en_espacios))) == 9:
+                        self.forma_de_ganar = "toco"
+                        print("toco")
 
                 lista_plana = set(chain.from_iterable(self.lista_cartas_en_espacios_verdes))
                 self.cartas_sin_usar = set(self.mesa.mano) - lista_plana
-                # {'8H2', '7H2', '9H2'} {'3D', '11H', '3S2', '4H', '1D2', '5H', '7D'} [['7H2', '8H2', '9H2']]
                 # sumar los puntos de las cartas sin usar
-                carta: str
                 for carta in self.cartas_sin_usar:
                     valor = int(carta.removesuffix('2')[:-1])
                     if valor > 10:
                         valor = 10
-                    self.mesa.puntos_jugadores[self.mesa.index % self.mesa.num_jugadores] += valor
-                print(self.mesa.index % self.mesa.num_jugadores)
+                    self.mesa.puntos_jugadores[self.mesa.jugador_actual] += valor
+
+                self.lista_cartas_en_espacios_verdes.clear()
+                self.color_espacios = ["red", "red", "red"]
+
+                self.siguiente_mano()
+
+                if (self.mesa.num_jugador_que_termino_ronda - 1) % self.mesa.num_jugadores == self.mesa.jugador_actual:
+                    # si el jugador que toco vuelve de nuevo significa que ya se termino la ronda
+                    print("fin")
+                    if self.mesa.carta_de_mazo:
+                        self.mesa.carta_de_mazo[1].bottomright = -1, -1
+
+                    self.mesa.posicionar_cartas_mano()
+                    self.game.gameStateManager.set_state("mesa")
 
         else:
             self.surf_texto_entregar = self.font.render("Entregar", True, "white")
@@ -390,11 +416,26 @@ class Ganar:
     def siguiente_mano(self):
         # si la carta no esta en la mesa la saca
         # list_cartas_en_mesa = self.mesa.mesa_verde_rect.collidelistall(self.mesa.list_rect_cartas)
+        if self.mesa.carta_de_mazo:
+            self.mesa.carta_de_mazo[1].bottomright = -1, -1
 
         for clave in self.mesa.mano:  # sacar a las anteriores antes de poner las nuevas
             self.mesa.dict_cartas[clave][1].bottomright = (-1, -1)
         self.mesa.index += 1
-        self.mesa.mano = self.mesa.manos_jugadores[self.mesa.index % self.mesa.num_jugadores]
+        self.mesa.jugador_actual = self.mesa.index % self.mesa.num_jugadores
+        self.mesa.mano = self.mesa.manos_jugadores[self.mesa.jugador_actual]
+
+        # if self.forma_de_ganar == "toco":
+        if True:
+            # todo: les da una carta extra
+            while True:
+                nueva_carta = random.choice(self.mesa.lista_claves[:-2])
+                if nueva_carta in self.mesa.cartas_repartidas:
+                    continue
+                self.mesa.carta_de_mazo = self.mesa.dict_cartas[nueva_carta]  # suf y rect de la carta entregada
+                self.mesa.carta_de_mazo[1].center = SCREEN_WIDTH - 100, SCREEN_HEIGHT - 400
+                break
+
         self.posicionar_cartas_mano()  # cambia las cartas de la mano
 
     def mover_carta(self, event):
@@ -434,6 +475,9 @@ class Ganar:
         if self.mesa.mano:
             for clave in self.mesa.mano:
                 self.game.screen.blit(self.mesa.dict_cartas[clave][0], self.mesa.dict_cartas[clave][1])
+
+        if self.mesa.carta_de_mazo:
+            self.game.screen.blit(self.mesa.carta_de_mazo[0], self.mesa.carta_de_mazo[1])
 
         pygame.display.update()
         self.game.clock.tick(FPS)

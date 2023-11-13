@@ -386,20 +386,21 @@ class Ganar:
                     if valor > 10:
                         valor = 10
                     self.mesa.puntos_jugadores[self.mesa.jugador_actual] += valor
+                    print(self.mesa.jugador_actual)
 
                 self.lista_cartas_en_espacios_verdes.clear()
                 self.color_espacios = ["red", "red", "red"]
 
                 self.siguiente_mano()
 
-                if (self.mesa.num_jugador_que_termino_ronda - 1) % self.mesa.num_jugadores == self.mesa.jugador_actual:
-                    # si el jugador que toco vuelve de nuevo significa que ya se termino la ronda
-                    print("fin")
-                    if self.mesa.carta_de_mazo:
-                        self.mesa.carta_de_mazo[1].bottomright = -1, -1
-
-                    self.mesa.posicionar_cartas_mano()
-                    self.game.gameStateManager.set_state("mesa")
+                # if (self.mesa.num_jugador_que_termino_ronda - 1) % self.mesa.num_jugadores == self.mesa.jugador_actual:
+                #     # si el jugador que toco vuelve de nuevo significa que ya se termino la ronda
+                #     print("fin")
+                #     if self.mesa.carta_de_mazo:
+                #         self.mesa.carta_de_mazo[1].bottomright = -1, -1
+                #
+                #     self.mesa.posicionar_cartas_mano()
+                #     self.game.gameStateManager.set_state("mesa")
 
         else:
             self.surf_texto_entregar = self.font.render("Entregar", True, "white")
@@ -427,7 +428,7 @@ class Ganar:
 
         # if self.forma_de_ganar == "toco":
         if True:
-            # todo: les da una carta extra
+            # les da una carta extra
             while True:
                 nueva_carta = random.choice(self.mesa.lista_claves[:-2])
                 if nueva_carta in self.mesa.cartas_repartidas:

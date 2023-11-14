@@ -69,7 +69,8 @@ class Mesa:
         self.cartas_repartidas = None
         self.tecla_N_presionada = False
         self.tecla_right_presionada = False
-        self.carta_entregada = None
+        self.carta_entregada_de_jugador = None
+        self.carta_mazo_fue_entregada = False
         self.num_jugadores = 3
         self.jugador_actual = 0
         self.num_jugador_que_termino_ronda = None
@@ -127,7 +128,10 @@ class Mesa:
         keys = pygame.key.get_pressed()
 
         if pygame.mouse.get_pressed()[0] and not self.was_pressed:  # cuando toca la carta volteada da una mano random
-            if self.rect_boton_carta.collidepoint(mouse_x, mouse_y):  # tomar carta del mazo
+            if self.rect_boton_carta.collidepoint(mouse_x, mouse_y) and not self.carta_mazo_fue_entregada:
+                self.carta_mazo_fue_entregada = True
+                if self.carta_entregada_de_jugador:
+                    self.carta_entregada_de_jugador[1].bottomright = -1, -1
                 if self.cartas_repartidas:
                     self.tomar_carta_de_mazo()
 
@@ -194,7 +198,7 @@ class Mesa:
     def siguiente_mano(self):
         # actualizar mano
         self.actualizar_mano()
-
+        self.carta_mazo_fue_entregada = False
         for clave in self.mano:  # sacar a las anteriores antes de poner las nuevas
             self.dict_cartas[clave][1].bottomright = (-1, -1)
 
@@ -203,18 +207,18 @@ class Mesa:
         self.mano = self.manos_jugadores[self.jugador_actual]
         self.posicionar_cartas_mano()  # cambia las cartas de la mano
         # agregar carta extra, # saca la anterior
-        if (self.carta_entregada  # si existe
-                and not self.rect_carta_a_entregar.colliderect(self.carta_entregada[1])  # si no se entraga
-                and self.carta_entregada not in self.mano.values()):  # si no esta en la mano
-            self.carta_entregada[1].bottomright = -1, -1  # la saca
+        if (self.carta_entregada_de_jugador  # si existe
+                and not self.rect_carta_a_entregar.colliderect(self.carta_entregada_de_jugador[1])  # si no se entraga
+                and self.carta_entregada_de_jugador not in self.mano.values()):  # si no esta en la mano
+            self.carta_entregada_de_jugador[1].bottomright = -1, -1  # la saca
         num_carta_entregada = self.rect_carta_a_entregar.collidelist(self.list_rect_cartas)
         if num_carta_entregada != -1:
             nomble_clave_carta = self.lista_claves[num_carta_entregada]
-            self.carta_entregada = self.dict_cartas[nomble_clave_carta]
-            self.carta_entregada[1].center = 100, 300
+            self.carta_entregada_de_jugador = self.dict_cartas[nomble_clave_carta]
+            self.carta_entregada_de_jugador[1].center = 100, 300
 
         # la carta tomada del mazo si no fue seleccionada se va fuera
-        if (self.carta_de_mazo and self.carta_de_mazo != self.carta_entregada and
+        if (self.carta_de_mazo and self.carta_de_mazo != self.carta_entregada_de_jugador and
                 self.carta_de_mazo not in self.mano.values()):
             self.carta_de_mazo[1].bottomright = -1, -1
 
@@ -271,8 +275,8 @@ class Mesa:
             for clave in self.mano:
                 self.game.screen.blit(self.dict_cartas[clave][0], self.dict_cartas[clave][1])
 
-        if self.carta_entregada:
-            self.game.screen.blit(self.carta_entregada[0], self.carta_entregada[1])
+        if self.carta_entregada_de_jugador:
+            self.game.screen.blit(self.carta_entregada_de_jugador[0], self.carta_entregada_de_jugador[1])
 
         if self.carta_de_mazo:
             self.game.screen.blit(self.carta_de_mazo[0], self.carta_de_mazo[1])
@@ -431,6 +435,7 @@ class Ganar:
         self.mesa.mano = self.mesa.manos_jugadores[self.mesa.jugador_actual]
 
         # if self.forma_de_ganar == "toco":
+        # el primer jugador no puede tomar carta del mazo
         if not self.mesa.num_jugador_que_termino_ronda % self.mesa.num_jugadores == self.mesa.jugador_actual:
             # les da una carta extra
             while True:

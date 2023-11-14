@@ -64,12 +64,13 @@ class GameStateManager:
 class Mesa:
     def __init__(self, game: Game):
         self.game = game
+        self.cartas_en_juego = None
         self.carta_de_mazo = None
         self.cartas_repartidas = None
         self.tecla_N_presionada = False
         self.tecla_right_presionada = False
         self.carta_entregada = None
-        self.num_jugadores = 4
+        self.num_jugadores = 3
         self.jugador_actual = 0
         self.num_jugador_que_termino_ronda = None
 
@@ -115,6 +116,7 @@ class Mesa:
 
         self.mano: dict = {}
         self.list_rect_cartas_en_juego = None
+        self.nombres_cartas_en_manos: list[list] = []
 
         self.manos_jugadores = []
         self.puntos_jugadores = [0] * self.num_jugadores
@@ -132,6 +134,8 @@ class Mesa:
             if self.rect_texto_ganer.collidepoint(mouse_x, mouse_y):
                 self.actualizar_mano()
                 self.num_jugador_que_termino_ronda = self.jugador_actual
+                if self.carta_de_mazo:
+                    self.carta_de_mazo[1].bottomright = -1, -1
                 self.game.gameStateManager.set_state("ganar")
 
             if self.rect_texto_tabla.collidepoint(mouse_x, mouse_y):
@@ -164,7 +168,8 @@ class Mesa:
     def tomar_carta_de_mazo(self):
         while True:
             nueva_carta = random.choice(self.lista_claves[:-2])
-            if nueva_carta in self.cartas_repartidas:
+            cartas_usadas = list(chain.from_iterable(self.nombres_cartas_en_manos))
+            if nueva_carta in cartas_usadas:
                 continue
             self.carta_de_mazo = self.dict_cartas[nueva_carta]  # suf y rect de la carta entregada
             self.carta_de_mazo[1].center = 200, 200
@@ -182,6 +187,7 @@ class Mesa:
             for c in self.cartas_repartidas[i: i + 10]:
                 d[c] = self.dict_cartas[c]
             self.manos_jugadores.append(d)  # lista de diccionarios
+            self.nombres_cartas_en_manos.append(list(d.keys()))
         self.mano = self.manos_jugadores[0]
         self.posicionar_cartas_mano()
 
@@ -214,11 +220,13 @@ class Mesa:
 
     def actualizar_mano(self):
         self.mano.clear()
+        self.nombres_cartas_en_manos[self.jugador_actual].clear()
         # si la carta no esta en la mesa la saca
         list_cartas_en_mesa = self.mesa_verde_rect.collidelistall(self.list_rect_cartas)
         for num_carta in list_cartas_en_mesa:
             nomble_clave_carta = self.lista_claves[num_carta]
             self.mano[nomble_clave_carta] = self.dict_cartas[nomble_clave_carta]
+            self.nombres_cartas_en_manos[self.jugador_actual].append(nomble_clave_carta)
 
     def mover_carta(self, event):
         # mover cualquier carta
@@ -386,21 +394,17 @@ class Ganar:
                     if valor > 10:
                         valor = 10
                     self.mesa.puntos_jugadores[self.mesa.jugador_actual] += valor
-                    print(self.mesa.jugador_actual)
 
                 self.lista_cartas_en_espacios_verdes.clear()
                 self.color_espacios = ["red", "red", "red"]
 
-                self.siguiente_mano()
+                if (self.mesa.num_jugador_que_termino_ronda - 1) % self.mesa.num_jugadores == self.mesa.jugador_actual:
+                    # si el jugador que toco vuelve de nuevo significa que ya se termino la ronda
 
-                # if (self.mesa.num_jugador_que_termino_ronda - 1) % self.mesa.num_jugadores == self.mesa.jugador_actual:
-                #     # si el jugador que toco vuelve de nuevo significa que ya se termino la ronda
-                #     print("fin")
-                #     if self.mesa.carta_de_mazo:
-                #         self.mesa.carta_de_mazo[1].bottomright = -1, -1
-                #
-                #     self.mesa.posicionar_cartas_mano()
-                #     self.game.gameStateManager.set_state("mesa")
+                    self.mesa.posicionar_cartas_mano()
+                    self.game.gameStateManager.set_state("mesa")
+
+                self.siguiente_mano()
 
         else:
             self.surf_texto_entregar = self.font.render("Entregar", True, "white")
@@ -427,11 +431,13 @@ class Ganar:
         self.mesa.mano = self.mesa.manos_jugadores[self.mesa.jugador_actual]
 
         # if self.forma_de_ganar == "toco":
-        if True:
+        if not self.mesa.num_jugador_que_termino_ronda % self.mesa.num_jugadores == self.mesa.jugador_actual:
             # les da una carta extra
             while True:
                 nueva_carta = random.choice(self.mesa.lista_claves[:-2])
-                if nueva_carta in self.mesa.cartas_repartidas:
+                cartas_usadas = list(chain.from_iterable(self.mesa.nombres_cartas_en_manos))
+
+                if nueva_carta in cartas_usadas:
                     continue
                 self.mesa.carta_de_mazo = self.mesa.dict_cartas[nueva_carta]  # suf y rect de la carta entregada
                 self.mesa.carta_de_mazo[1].center = SCREEN_WIDTH - 100, SCREEN_HEIGHT - 400

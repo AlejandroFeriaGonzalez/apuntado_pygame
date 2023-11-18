@@ -70,10 +70,12 @@ class Mesa:
         self.tecla_N_presionada = False
         self.tecla_right_presionada = False
         self.carta_entregada_de_jugador = None
+        self.clave_carta_entregada_de_jugador = None
         self.carta_mazo_fue_entregada = False
-        self.num_jugadores = 3
+        self.num_jugadores = 2
         self.jugador_actual = 0
         self.num_jugador_que_termino_ronda = None
+        self.cartas_que_no_aparecen_mas = set()  # lista de cartas que se desecharon para que vuelvan a aparecer
 
         self.list_rect_cartas = []
         self.dict_cartas = {}
@@ -130,7 +132,7 @@ class Mesa:
         if pygame.mouse.get_pressed()[0] and not self.was_pressed:  # cuando toca la carta volteada da una mano random
             if self.rect_boton_carta.collidepoint(mouse_x, mouse_y) and not self.carta_mazo_fue_entregada:
                 self.carta_mazo_fue_entregada = True
-                if self.carta_entregada_de_jugador:
+                if self.carta_entregada_de_jugador:  # la carta entregada del jugador desaparece
                     self.carta_entregada_de_jugador[1].bottomright = -1, -1
                 if self.cartas_repartidas:
                     self.tomar_carta_de_mazo()
@@ -172,12 +174,15 @@ class Mesa:
     def tomar_carta_de_mazo(self):
         while True:
             nueva_carta = random.choice(self.lista_claves[:-2])
-            cartas_usadas = list(chain.from_iterable(self.nombres_cartas_en_manos))
-            if nueva_carta in cartas_usadas:
+            if nueva_carta in self.cartas_que_no_aparecen_mas:
                 continue
             self.carta_de_mazo = self.dict_cartas[nueva_carta]  # suf y rect de la carta entregada
+            self.cartas_que_no_aparecen_mas.add(nueva_carta)
             self.carta_de_mazo[1].center = 200, 200
             break
+
+        if len(self.cartas_que_no_aparecen_mas) > 100:
+            self.cartas_que_no_aparecen_mas = set(chain.from_iterable(self.nombres_cartas_en_manos))
 
     def nuevo_juego(self):
         if self.manos_jugadores:  # envia la cartas que estaban antes fuera del mapa
@@ -190,6 +195,7 @@ class Mesa:
             d = {}
             for c in self.cartas_repartidas[i: i + 10]:
                 d[c] = self.dict_cartas[c]
+                self.cartas_que_no_aparecen_mas.add(c)
             self.manos_jugadores.append(d)  # lista de diccionarios
             self.nombres_cartas_en_manos.append(list(d.keys()))
         self.mano = self.manos_jugadores[0]
@@ -211,10 +217,13 @@ class Mesa:
                 and not self.rect_carta_a_entregar.colliderect(self.carta_entregada_de_jugador[1])  # si no se entraga
                 and self.carta_entregada_de_jugador not in self.mano.values()):  # si no esta en la mano
             self.carta_entregada_de_jugador[1].bottomright = -1, -1  # la saca
-        num_carta_entregada = self.rect_carta_a_entregar.collidelist(self.list_rect_cartas)
+
+        num_carta_entregada = self.rect_carta_a_entregar.collidelist(self.list_rect_cartas)  # carta que el jug entrega
         if num_carta_entregada != -1:
             nomble_clave_carta = self.lista_claves[num_carta_entregada]
             self.carta_entregada_de_jugador = self.dict_cartas[nomble_clave_carta]
+            # self.cartas_que_no_aparecen_mas.add(nomble_clave_carta)
+
             self.carta_entregada_de_jugador[1].center = 100, 300
 
         # la carta tomada del mazo si no fue seleccionada se va fuera
@@ -231,6 +240,7 @@ class Mesa:
             nomble_clave_carta = self.lista_claves[num_carta]
             self.mano[nomble_clave_carta] = self.dict_cartas[nomble_clave_carta]
             self.nombres_cartas_en_manos[self.jugador_actual].append(nomble_clave_carta)
+            self.cartas_que_no_aparecen_mas.add(nomble_clave_carta)
 
     def mover_carta(self, event):
         # mover cualquier carta
@@ -440,9 +450,8 @@ class Ganar:
             # les da una carta extra
             while True:
                 nueva_carta = random.choice(self.mesa.lista_claves[:-2])
-                cartas_usadas = list(chain.from_iterable(self.mesa.nombres_cartas_en_manos))
-
-                if nueva_carta in cartas_usadas:
+                # cartas_usadas = list(chain.from_iterable(self.mesa.nombres_cartas_en_manos))
+                if nueva_carta in self.mesa.cartas_que_no_aparecen_mas:
                     continue
                 self.mesa.carta_de_mazo = self.mesa.dict_cartas[nueva_carta]  # suf y rect de la carta entregada
                 self.mesa.carta_de_mazo[1].center = SCREEN_WIDTH - 100, SCREEN_HEIGHT - 400

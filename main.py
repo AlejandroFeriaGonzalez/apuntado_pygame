@@ -35,14 +35,18 @@ class Game:
 
         self.gameStateManager = GameStateManager('start')
         self.start = Start(self)
-        self.mesa = Mesa(self)
-        self.ganar = Ganar(self, self.mesa)
+        # self.mesa = Mesa(self)
+        # self.ganar = Ganar(self, self.mesa)
 
         self.states = {
-            'start': self.start,
-            'mesa': self.mesa,
-            'ganar': self.ganar
+            'start': self.start
         }
+
+        # self.states = {
+        #     'start': self.start,
+        #     'mesa': self.mesa,
+        #     'ganar': self.ganar
+        # }
 
     def run(self):
         while True:
@@ -62,7 +66,7 @@ class GameStateManager:
 
 
 class Mesa:
-    def __init__(self, game: Game):
+    def __init__(self, game: Game, lista_nombres):
         self.game = game
         self.cartas_en_juego = None
         self.carta_de_mazo = None
@@ -72,7 +76,8 @@ class Mesa:
         self.carta_entregada_de_jugador = None
         self.clave_carta_entregada_de_jugador = None
         self.carta_mazo_fue_entregada = False
-        self.num_jugadores = 2
+        self.lista_nombres = lista_nombres
+        self.num_jugadores = len(self.lista_nombres)
         self.jugador_actual = 0
         self.num_jugador_que_termino_ronda = None
         self.cartas_que_no_aparecen_mas = set()  # lista de cartas que se desecharon para que vuelvan a aparecer
@@ -142,6 +147,7 @@ class Mesa:
                 self.num_jugador_que_termino_ronda = self.jugador_actual
                 if self.carta_de_mazo:
                     self.carta_de_mazo[1].bottomright = -1, -1
+                self.game.states['ganar'] = Ganar(self.game, self)
                 self.game.gameStateManager.set_state("ganar")
 
             if self.rect_texto_tabla.collidepoint(mouse_x, mouse_y):
@@ -568,6 +574,7 @@ class Start:
         if self.button_text_rect.collidepoint(mouse_x, mouse_y):
             self.button_text = self.font.render("Iniciar", True, "blue")
             if pygame.mouse.get_pressed()[0] and not self.was_pressed:
+                self.game.states['mesa'] = Mesa(self.game, self.lista_nombres)
                 self.game.gameStateManager.set_state('mesa')
         else:
             self.button_text = self.font.render("Iniciar", True, "white")

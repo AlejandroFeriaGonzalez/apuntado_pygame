@@ -16,8 +16,10 @@ def es_terna(cartas_en_espacios: list[str]) -> bool:  # mismo valor sin importar
 
 def orden(numerodecarta: list[int])->bool: # regla: JQK A23 son validos 
     __num=[1,2,3,4,5,6,7,8,9,10,11,12,13]
-    if __num[-1]in numerodecarta and __num[1] in numerodecarta: # necesito que un rango entre 1 y 13 que se reinicie
+    if __num[-1]in numerodecarta and __num[1] in numerodecarta:
          return True
+    """la logica es la siguiente:
+    los numeros ya estan ordenados, si eso da"""
 
 
 

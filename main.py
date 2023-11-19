@@ -481,8 +481,7 @@ class Ganar:
     def siguiente_mano(self):
         # si la carta no esta en la mesa la saca
         # list_cartas_en_mesa = self.mesa.mesa_verde_rect.collidelistall(self.mesa.list_rect_cartas)
-        if self.mesa.carta_de_mazo:
-            self.mesa.carta_de_mazo[1].bottomright = -1, -1
+
 
         for clave in self.mesa.mano:  # sacar a las anteriores antes de poner las nuevas
             self.mesa.dict_cartas[clave][1].bottomright = (-1, -1)
@@ -494,16 +493,6 @@ class Ganar:
 
         # if self.forma_de_ganar == "toco":
         # el primer jugador no puede tomar carta del mazo
-        if not self.mesa.num_jugador_que_termino_ronda % self.mesa.num_jugadores == self.mesa.jugador_actual:
-            # les da una carta extra
-            while True:
-                nueva_carta = random.choice(self.mesa.lista_claves[:-2])
-                # cartas_usadas = list(chain.from_iterable(self.mesa.nombres_cartas_en_manos))
-                if nueva_carta in self.mesa.cartas_que_no_aparecen_mas:
-                    continue
-                self.mesa.carta_de_mazo = self.mesa.dict_cartas[nueva_carta]  # suf y rect de la carta entregada
-                self.mesa.carta_de_mazo[1].center = SCREEN_WIDTH - 100, SCREEN_HEIGHT - 400
-                break
 
         self.posicionar_cartas_mano()  # cambia las cartas de la mano
 
@@ -548,8 +537,6 @@ class Ganar:
             for clave in self.mesa.mano:
                 self.game.screen.blit(self.mesa.dict_cartas[clave][0], self.mesa.dict_cartas[clave][1])
 
-        if self.mesa.carta_de_mazo:
-            self.game.screen.blit(self.mesa.carta_de_mazo[0], self.mesa.carta_de_mazo[1])
 
         pygame.display.update()
         self.game.clock.tick(FPS)

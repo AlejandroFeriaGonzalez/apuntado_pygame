@@ -475,6 +475,8 @@ class Ganar:
                         valor = int(carta.removesuffix('2')[:-1])
                         if valor > 10:
                             valor = 10
+                        if valor == 1:
+                            valor = 10
                         self.mesa.puntos_jugadores[self.mesa.jugador_actual] += valor
 
                 self.lista_cartas_en_espacios_verdes.clear()

@@ -75,7 +75,7 @@ class GameStateManager:
 
 
 class Mesa:
-    def __init__(self, game: Game, lista_nombres:list):
+    def __init__(self, game: Game, lista_nombres: list):
         self.game = game
         self.cartas_en_juego = None
         self.carta_de_mazo = None
@@ -310,7 +310,13 @@ class Mesa:
     def uptade(self):
 
         for i, puntos_jugador in enumerate(self.puntos_jugadores):
-            if puntos_jugador < -50 or puntos_jugador > 100:
+            if puntos_jugador < -51:
+                print(self.lista_nombres)
+                print(self.puntos_jugadores)
+                ganador = self.lista_nombres.pop(i)
+                print("GANADOR:", ganador)
+                sys.exit()
+            if puntos_jugador > 100:
                 print(self.lista_nombres)
                 print(self.puntos_jugadores)
                 perdedor = self.lista_nombres.pop(i)

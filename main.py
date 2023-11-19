@@ -33,6 +33,12 @@ class Game:
         file = os.path.join(main_dir, "data", "fondo.png")
         self.fondo = pygame.image.load(file).convert()
 
+        file_flecha = os.path.join(main_dir, "data", "flecha.png")
+        flecha = pygame.image.load(file_flecha).convert_alpha()
+        self.flecha = pygame.transform.scale(flecha, (50, 50))
+        self.flecha_rect = self.flecha.get_rect()
+        self.flecha_rect.topleft = (self.screen_rect.right - 50, self.screen_rect.centery - 50)
+
         self.ruta_cartas = os.path.join(main_dir, "data", "Cards")
         pygame.display.set_caption("Move Cards")
 
@@ -78,7 +84,6 @@ class Mesa:
         self.tecla_right_presionada = False
         self.carta_entregada_de_jugador = None
         self.clave_carta_entregada_de_jugador = None
-        self.carta_mazo_fue_entregada = False
         self.lista_nombres = lista_nombres
         self.num_jugadores = len(self.lista_nombres)
         self.jugador_actual = 0
@@ -136,6 +141,10 @@ class Mesa:
         self.texto_turno = self.font.render(
             f'Turno: {self.lista_nombres[self.jugador_actual]}', True, "white")
 
+        self.nuevo_juego()
+        self.tomar_carta_de_mazo()
+        self.carta_mazo_fue_entregada = True
+
     def check_events(self):
         mouse_x, mouse_y = pygame.mouse.get_pos()
         keys = pygame.key.get_pressed()
@@ -157,7 +166,24 @@ class Mesa:
                 self.game.gameStateManager.set_state("ganar")
 
             if self.rect_texto_tabla.collidepoint(mouse_x, mouse_y):
-                print(self.puntos_jugadores)
+                # print(self.lista_nombres)
+                # print(self.puntos_jugadores)
+                tabla = zip(self.lista_nombres, self.puntos_jugadores)
+                out = "TABLA PUNTOS\n"
+                for nombre, puntos in tabla:
+                    out += f'{nombre}: {puntos}\n'
+                print(out)
+                fondo_tabla = pygame.font.SysFont("impact", 50)
+                surf_tabla = fondo_tabla.render(out, True, "orange")
+                self.game.screen.blit(surf_tabla, (400, 50))
+                pygame.display.update()
+                pygame.time.wait(2000)
+
+            if self.game.flecha_rect.collidepoint(mouse_x, mouse_y):
+                if (len(self.mesa_verde_rect.collidelistall(self.list_rect_cartas)) == 10 and
+                        len(self.rect_carta_a_entregar.collidelistall(self.list_rect_cartas)) == 1):
+                    self.siguiente_mano()
+
         self.was_pressed = pygame.mouse.get_pressed()[0]
 
         if keys[pygame.K_n] and not self.tecla_N_presionada:
@@ -282,6 +308,7 @@ class Mesa:
 
         # self.game.screen.fill((0, 0, 0))
         self.game.screen.blit(self.game.fondo, (0, 0))
+        self.game.screen.blit(self.game.flecha, self.game.flecha_rect)
 
         self.game.screen.blit(self.texto_turno, (0, 0))
 
@@ -334,12 +361,12 @@ class Ganar:
 
         self.lista_cartas_en_espacios: list[list] = []
 
-        self.font = pygame.font.SysFont("impact", 30)
-        self.surf_texto_comprobar = self.font.render("comprobar", True, "white")
+        self.font_letras = pygame.font.SysFont("impact", 30)
+        self.surf_texto_comprobar = self.font_letras.render("comprobar", True, "white")
         self.rect_texto_comprobar = self.surf_texto_comprobar.get_rect()
         self.rect_texto_comprobar.center = (900, self.game.screen_rect.height - 250)
 
-        self.surf_texto_entregar = self.font.render("Entregar", True, "white")
+        self.surf_texto_entregar = self.font_letras.render("Entregar", True, "white")
         self.rect_texto_entregar = self.surf_texto_entregar.get_rect()
         self.rect_texto_entregar.center = (900, self.game.screen_rect.height - 200)
 
@@ -383,7 +410,7 @@ class Ganar:
 
         # logica boton de comprobar
         if self.rect_texto_comprobar.collidepoint(mouse_x, mouse_y):
-            self.surf_texto_comprobar = self.font.render("comprobar", True, "blue")
+            self.surf_texto_comprobar = self.font_letras.render("comprobar", True, "blue")
 
             if pygame.mouse.get_pressed()[0] and not self.was_pressed:  # da click en comprobar
 
@@ -394,11 +421,11 @@ class Ganar:
                     else:
                         self.color_espacios[i] = "red"
         else:
-            self.surf_texto_comprobar = self.font.render("comprobar", True, "white")
+            self.surf_texto_comprobar = self.font_letras.render("comprobar", True, "white")
 
         # logica de boton de enviar, actualiza tabla
         if self.rect_texto_entregar.collidepoint(mouse_x, mouse_y):
-            self.surf_texto_entregar = self.font.render("Entregar", True, "blue")
+            self.surf_texto_entregar = self.font_letras.render("Entregar", True, "blue")
             if pygame.mouse.get_pressed()[0] and not self.was_pressed:  # da click en comprobar
 
                 self.cartas_en_espacios()
@@ -440,7 +467,7 @@ class Ganar:
                 self.siguiente_mano()
 
         else:
-            self.surf_texto_entregar = self.font.render("Entregar", True, "white")
+            self.surf_texto_entregar = self.font_letras.render("Entregar", True, "white")
 
         self.was_pressed = pygame.mouse.get_pressed()[0]
 
@@ -462,6 +489,8 @@ class Ganar:
         self.mesa.index += 1
         self.mesa.jugador_actual = self.mesa.index % self.mesa.num_jugadores
         self.mesa.mano = self.mesa.manos_jugadores[self.mesa.jugador_actual]
+        self.mesa.texto_turno = self.mesa.font.render(
+            f'Turno: {self.mesa.lista_nombres[self.mesa.jugador_actual]}', True, "white")
 
         # if self.forma_de_ganar == "toco":
         # el primer jugador no puede tomar carta del mazo
@@ -505,6 +534,7 @@ class Ganar:
     def uptade(self):
         # self.game.screen.fill((0, 0, 0))
         self.game.screen.blit(self.game.fondo, (0, 0))
+        self.game.screen.blit(self.mesa.texto_turno, (0, 0))
 
         # lista de rects
         self.list_rect_cartas_en_juego = self.game.screen_rect.collideobjectsall(self.mesa.list_rect_cartas)
@@ -580,7 +610,7 @@ class Start:
             self.lista_colores.append(self.color_passive)
             self.lista_active_input.append(False)
             self.lista_label_nombre_jugadores.append(
-                self.base_font.render(f"Jugador {i+1}", True, "white"))
+                self.base_font.render(f"Jugador {i + 1}", True, "white"))
 
     def check_event(self):
         mouse_x, mouse_y = pygame.mouse.get_pos()

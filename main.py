@@ -211,7 +211,6 @@ class Mesa:
     def tomar_carta_de_mazo(self):
         while True:
             nueva_carta = random.choice(self.lista_claves[:-2])
-            print(self.cartas_que_no_aparecen_mas)
             if nueva_carta in self.cartas_que_no_aparecen_mas:
                 continue
             self.carta_de_mazo = self.dict_cartas[nueva_carta]  # suf y rect de la carta entregada

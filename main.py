@@ -439,21 +439,26 @@ class Ganar:
                         self.color_espacios[i] = "red"
 
                 if self.mesa.jugador_actual == self.mesa.num_jugador_que_termino_ronda:
-                    if all(x == "green" for x in self.color_espacios):
+                    # si es el jugador que toco
+                    if all(x == "green" for x in self.color_espacios) or GANAR_NO_OBLIGATORIO:
                         print("gano")  # ningun jugador puede tomar otra carta
                         self.forma_de_ganar = "gano"
-                    elif len(list(chain.from_iterable(self.lista_cartas_en_espacios))) == 9:
-                        self.forma_de_ganar = "toco"
-                        print("toco")
+                        self.mesa.puntos_jugadores[self.mesa.jugador_actual] -= 10
+                    else:
+                        # salir
+                        self.forma_de_ganar = "no_gano"
+                        self.mesa.posicionar_cartas_mano()
+                        self.game.gameStateManager.set_state("mesa")
 
                 lista_plana = set(chain.from_iterable(self.lista_cartas_en_espacios_verdes))
                 self.cartas_sin_usar = set(self.mesa.mano) - lista_plana
                 # sumar los puntos de las cartas sin usar
-                for carta in self.cartas_sin_usar:
-                    valor = int(carta.removesuffix('2')[:-1])
-                    if valor > 10:
-                        valor = 10
-                    self.mesa.puntos_jugadores[self.mesa.jugador_actual] += valor
+                if self.forma_de_ganar != "no_gano":
+                    for carta in self.cartas_sin_usar:
+                        valor = int(carta.removesuffix('2')[:-1])
+                        if valor > 10:
+                            valor = 10
+                        self.mesa.puntos_jugadores[self.mesa.jugador_actual] += valor
 
                 self.lista_cartas_en_espacios_verdes.clear()
                 self.color_espacios = ["red", "red", "red"]
@@ -481,7 +486,6 @@ class Ganar:
     def siguiente_mano(self):
         # si la carta no esta en la mesa la saca
         # list_cartas_en_mesa = self.mesa.mesa_verde_rect.collidelistall(self.mesa.list_rect_cartas)
-
 
         for clave in self.mesa.mano:  # sacar a las anteriores antes de poner las nuevas
             self.mesa.dict_cartas[clave][1].bottomright = (-1, -1)
@@ -536,7 +540,6 @@ class Ganar:
         if self.mesa.mano:
             for clave in self.mesa.mano:
                 self.game.screen.blit(self.mesa.dict_cartas[clave][0], self.mesa.dict_cartas[clave][1])
-
 
         pygame.display.update()
         self.game.clock.tick(FPS)

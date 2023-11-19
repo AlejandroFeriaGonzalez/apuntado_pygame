@@ -14,11 +14,17 @@ def es_terna(cartas_en_espacios: list[str]) -> bool:  # mismo valor sin importar
 
     return False
 
+def orden(numerodecarta: list[int])->bool: # regla: JQK A23 son validos 
+    __num=[1,2,3,4,5,6,7,8,9,10,11,12,13]
+    if __num[-1]in numerodecarta and __num[1] in numerodecarta: # necesito que un rango entre 1 y 13 que se reinicie
+         return True
+
+
 
 def es_escarela(cartas_en_espacios: list[str]) -> bool:
     if len(cartas_en_espacios) < 3:
         return False
-
+    
     lista_cartas = list(map(lambda x: x.removesuffix('2'), cartas_en_espacios))  # quita el 2 al final
 
     grupos = list(map(lambda x: x[-1], lista_cartas))
@@ -27,7 +33,7 @@ def es_escarela(cartas_en_espacios: list[str]) -> bool:
         lista_cartas.sort(key=lambda x: x[:-1])
         numeros = list(map(int, map(lambda x: x[:-1], lista_cartas)))  # ordena por numeros y los convierte a int
 
-        if list(range(min(numeros), max(numeros) + 1)) == numeros:
+        if list(range(min(numeros), max(numeros) + 1)) == numeros or orden(numeros) :
             return True
 
     return False

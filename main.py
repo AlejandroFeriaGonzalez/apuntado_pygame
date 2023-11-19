@@ -362,13 +362,13 @@ class Ganar:
     def __init__(self, game: Game, mesa: Mesa):
         self.game = game
         self.mesa = mesa
-        self.cartas_sin_usar = None
+        self.cartas_no_usadas = None
         self.K_RIGHT_presionada = False
         self.was_pressed = False
         self.forma_de_ganar = None  # toco | gano  # forma en que gano el jugador
 
         self.carta_activa = None
-        self.list_rect_cartas_en_juego = None
+        self.rect_cartas_en_juego = None
 
         self.lista_cartas_en_espacios: list[list] = []
 
@@ -463,9 +463,9 @@ class Ganar:
                         self.game.gameStateManager.set_state("mesa")
 
                 lista_plana = set(chain.from_iterable(self.lista_cartas_en_espacios_verdes))
-                self.cartas_sin_usar = set(self.mesa.mano) - lista_plana
+                self.cartas_no_usadas = set(self.mesa.mano) - lista_plana
                 if self.forma_de_ganar != "no_gano":
-                    for carta in self.cartas_sin_usar:
+                    for carta in self.cartas_no_usadas:
                         valor = int(carta.removesuffix('2')[:-1])
                         if valor > 10:
                             valor = 10
@@ -515,7 +515,7 @@ class Ganar:
     def mover_carta(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
-                for carta in self.list_rect_cartas_en_juego:
+                for carta in self.rect_cartas_en_juego:
                     if carta.collidepoint(event.pos):
                         self.carta_activa = carta
         if event.type == pygame.MOUSEBUTTONUP:
@@ -542,7 +542,7 @@ class Ganar:
         self.game.screen.blit(self.mesa.texto_turno, (0, 0))
 
         # lista de rects
-        self.list_rect_cartas_en_juego = self.game.screen_rect.collideobjectsall(self.mesa.list_rect_cartas)
+        self.rect_cartas_en_juego = self.game.screen_rect.collideobjectsall(self.mesa.list_rect_cartas)
 
         self.game.screen.blit(self.surf_texto_comprobar, self.rect_texto_comprobar)
         self.game.screen.blit(self.surf_texto_entregar, self.rect_texto_entregar)

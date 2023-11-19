@@ -30,6 +30,9 @@ class Game:
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont("freesans", 20)
 
+        file = os.path.join(main_dir, "data", "fondo.png")
+        self.fondo = pygame.image.load(file).convert()
+
         self.ruta_cartas = os.path.join(main_dir, "data", "Cards")
         pygame.display.set_caption("Move Cards")
 
@@ -129,6 +132,9 @@ class Mesa:
         self.manos_jugadores = []
         self.puntos_jugadores = [0] * self.num_jugadores
         self.index = 0
+
+        self.texto_turno = self.font.render(
+            f'Turno: {self.lista_nombres[self.jugador_actual]}', True, "white")
 
     def check_events(self):
         mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -237,6 +243,9 @@ class Mesa:
                 self.carta_de_mazo not in self.mano.values()):
             self.carta_de_mazo[1].bottomright = -1, -1
 
+        self.texto_turno = self.font.render(
+            f'Turno: {self.lista_nombres[self.jugador_actual]}', True, "white")
+
     def actualizar_mano(self):
         self.mano.clear()
         self.nombres_cartas_en_manos[self.jugador_actual].clear()
@@ -271,9 +280,13 @@ class Mesa:
 
     def uptade(self):
 
-        self.game.screen.fill((0, 0, 0))
-        pygame.draw.rect(self.game.screen, "green", self.mesa_verde_rect)
-        pygame.draw.rect(self.game.screen, "green", self.rect_carta_a_entregar)
+        # self.game.screen.fill((0, 0, 0))
+        self.game.screen.blit(self.game.fondo, (0, 0))
+
+        self.game.screen.blit(self.texto_turno, (0, 0))
+
+        pygame.draw.rect(self.game.screen, "gray", self.mesa_verde_rect, 2)
+        pygame.draw.rect(self.game.screen, "gray3", self.rect_carta_a_entregar, 2)
 
         self.game.screen.blit(self.surf_texto_ganar, self.rect_texto_ganer)
         self.game.screen.blit(self.surf_texto_tabla, self.rect_texto_tabla)
@@ -490,7 +503,9 @@ class Ganar:
             self.lista_cartas_en_espacios.append(lista)
 
     def uptade(self):
-        self.game.screen.fill((0, 0, 0))
+        # self.game.screen.fill((0, 0, 0))
+        self.game.screen.blit(self.game.fondo, (0, 0))
+
         # lista de rects
         self.list_rect_cartas_en_juego = self.game.screen_rect.collideobjectsall(self.mesa.list_rect_cartas)
 
@@ -626,8 +641,8 @@ class Start:
                 sys.exit()
 
     def uptade(self):
-        self.game.screen.fill((0, 0, 0))
-
+        # self.game.screen.fill((0, 0, 0))
+        self.game.screen.blit(self.game.fondo, (0, 0))
         # num jugadores
         self.game.screen.blit(self.label_num_jugadores, (190, self.rect_input_num_jugadores.y + 3))
         self.game.screen.blit(self.label_ok, self.rect_label_ok)

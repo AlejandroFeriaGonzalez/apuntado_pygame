@@ -75,7 +75,7 @@ class GameStateManager:
 
 
 class Mesa:
-    def __init__(self, game: Game, lista_nombres):
+    def __init__(self, game: Game, lista_nombres:list):
         self.game = game
         self.cartas_en_juego = None
         self.carta_de_mazo = None
@@ -142,8 +142,7 @@ class Mesa:
             f'Turno: {self.lista_nombres[self.jugador_actual]}', True, "white")
 
         self.nuevo_juego()
-        self.tomar_carta_de_mazo()
-        self.carta_mazo_fue_entregada = True
+        self.carta_mazo_fue_entregada = False
 
     def check_events(self):
         mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -212,6 +211,7 @@ class Mesa:
     def tomar_carta_de_mazo(self):
         while True:
             nueva_carta = random.choice(self.lista_claves[:-2])
+            print(self.cartas_que_no_aparecen_mas)
             if nueva_carta in self.cartas_que_no_aparecen_mas:
                 continue
             self.carta_de_mazo = self.dict_cartas[nueva_carta]  # suf y rect de la carta entregada
@@ -223,6 +223,7 @@ class Mesa:
             self.cartas_que_no_aparecen_mas = set(chain.from_iterable(self.nombres_cartas_en_manos))
 
     def nuevo_juego(self):
+        self.cartas_que_no_aparecen_mas.clear()
         if self.manos_jugadores:  # envia la cartas que estaban antes fuera del mapa
             for mano in self.manos_jugadores:
                 for clave in mano:
@@ -238,6 +239,9 @@ class Mesa:
             self.nombres_cartas_en_manos.append(list(d.keys()))
         self.mano = self.manos_jugadores[0]
         self.posicionar_cartas_mano()
+        if self.carta_de_mazo:
+            self.carta_de_mazo[1].bottomright = -1, -1
+        self.carta_mazo_fue_entregada = False
 
     def siguiente_mano(self):
         # actualizar mano
@@ -305,6 +309,14 @@ class Mesa:
             i += 100
 
     def uptade(self):
+
+        for i, puntos_jugador in enumerate(self.puntos_jugadores):
+            if puntos_jugador < -50 or puntos_jugador > 100:
+                print(self.lista_nombres)
+                print(self.puntos_jugadores)
+                perdedor = self.lista_nombres.pop(i)
+                print("PERDEDOR:", perdedor)
+                sys.exit()
 
         # self.game.screen.fill((0, 0, 0))
         self.game.screen.blit(self.game.fondo, (0, 0))
@@ -443,7 +455,8 @@ class Ganar:
                     if all(x == "green" for x in self.color_espacios) or GANAR_NO_OBLIGATORIO:
                         print("gano")  # ningun jugador puede tomar otra carta
                         self.forma_de_ganar = "gano"
-                        self.mesa.puntos_jugadores[self.mesa.jugador_actual] -= 10
+                        if all(x == "green" for x in self.color_espacios):
+                            self.mesa.puntos_jugadores[self.mesa.jugador_actual] -= 10
                     else:
                         # salir
                         self.forma_de_ganar = "no_gano"
@@ -452,7 +465,6 @@ class Ganar:
 
                 lista_plana = set(chain.from_iterable(self.lista_cartas_en_espacios_verdes))
                 self.cartas_sin_usar = set(self.mesa.mano) - lista_plana
-                # sumar los puntos de las cartas sin usar
                 if self.forma_de_ganar != "no_gano":
                     for carta in self.cartas_sin_usar:
                         valor = int(carta.removesuffix('2')[:-1])
@@ -467,6 +479,7 @@ class Ganar:
                     # si el jugador que toco vuelve de nuevo significa que ya se termino la ronda
 
                     self.mesa.posicionar_cartas_mano()
+                    self.mesa.nuevo_juego()
                     self.game.gameStateManager.set_state("mesa")
 
                 self.siguiente_mano()

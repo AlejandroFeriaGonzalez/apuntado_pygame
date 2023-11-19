@@ -160,7 +160,7 @@ class Mesa:
             if self.rect_texto_ganer.collidepoint(mouse_x, mouse_y):
                 self.actualizar_mano()
                 self.num_jugador_que_termino_ronda = self.jugador_actual
-                if self.carta_de_mazo:
+                if self.carta_de_mazo and self.carta_de_mazo not in self.mano.values():
                     self.carta_de_mazo[1].bottomright = -1, -1
                 self.game.states['ganar'] = Ganar(self.game, self)
                 self.game.gameStateManager.set_state("ganar")

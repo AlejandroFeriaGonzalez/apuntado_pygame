@@ -10,7 +10,7 @@ def es_terna(cartas_en_espacios: list[str]) -> bool:  # mismo valor sin importar
     lista_cartas = list(map(lambda x: x.removesuffix('2'), cartas_en_espacios))  # quita el 2 al final
     numeros = list(map(int, map(lambda x: x[:-1], lista_cartas)))
 
-    if all_same(numeros):
+    if all_same(numeros) or orden(numeros)  :
         return True
 
     return False

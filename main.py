@@ -591,6 +591,7 @@ class Start:
 
         self.base_font = pygame.font.Font(None, 32)
         self.label_num_jugadores = self.base_font.render("Numero de jugadores", True, "white")
+        self.label_tokens = self.base_font.render("Tokens", True, "white")
         self.label_ok = self.base_font.render("OK", True, "white")
         self.rect_label_ok = self.label_ok.get_rect()
 
@@ -685,6 +686,7 @@ class Start:
         self.game.screen.blit(self.game.fondo, (0, 0))
         # num jugadores
         self.game.screen.blit(self.label_num_jugadores, (190, self.rect_input_num_jugadores.y + 3))
+        self.game.screen.blit(self.label_tokens, (5, 5))
         self.game.screen.blit(self.label_ok, self.rect_label_ok)
 
         if self.active_input_num_jugadores:

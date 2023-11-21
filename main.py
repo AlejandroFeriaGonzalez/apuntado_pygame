@@ -75,7 +75,7 @@ class GameStateManager:
 
 
 class Mesa:
-    def __init__(self, game: Game, lista_nombres:list):
+    def __init__(self, game: Game, lista_nombres: list):
         self.game = game
         self.cartas_en_juego = None
         self.carta_de_mazo = None
@@ -310,7 +310,13 @@ class Mesa:
     def uptade(self):
 
         for i, puntos_jugador in enumerate(self.puntos_jugadores):
-            if puntos_jugador < -50 or puntos_jugador > 100:
+            if puntos_jugador < -51:
+                print(self.lista_nombres)
+                print(self.puntos_jugadores)
+                ganador = self.lista_nombres.pop(i)
+                print("GANADOR:", ganador)
+                sys.exit()
+            if puntos_jugador > 100:
                 print(self.lista_nombres)
                 print(self.puntos_jugadores)
                 perdedor = self.lista_nombres.pop(i)
@@ -469,6 +475,8 @@ class Ganar:
                         valor = int(carta.removesuffix('2')[:-1])
                         if valor > 10:
                             valor = 10
+                        if valor == 1:
+                            valor = 10
                         self.mesa.puntos_jugadores[self.mesa.jugador_actual] += valor
 
                 self.lista_cartas_en_espacios_verdes.clear()
@@ -583,6 +591,7 @@ class Start:
 
         self.base_font = pygame.font.Font(None, 32)
         self.label_num_jugadores = self.base_font.render("Numero de jugadores", True, "white")
+        self.label_tokens = self.base_font.render("Tokens", True, "white")
         self.label_ok = self.base_font.render("OK", True, "white")
         self.rect_label_ok = self.label_ok.get_rect()
 
@@ -677,6 +686,7 @@ class Start:
         self.game.screen.blit(self.game.fondo, (0, 0))
         # num jugadores
         self.game.screen.blit(self.label_num_jugadores, (190, self.rect_input_num_jugadores.y + 3))
+        self.game.screen.blit(self.label_tokens, (5, 5))
         self.game.screen.blit(self.label_ok, self.rect_label_ok)
 
         if self.active_input_num_jugadores:

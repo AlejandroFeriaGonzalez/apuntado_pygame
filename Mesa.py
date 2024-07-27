@@ -6,10 +6,9 @@ from itertools import chain
 import pygame
 
 from GLOBAL import *
-from Game import Game
 from Ganar import Ganar
 from funciones import *
-
+from Game import Game
 
 class Mesa:
     def __init__(self, game: Game, lista_nombres: list):

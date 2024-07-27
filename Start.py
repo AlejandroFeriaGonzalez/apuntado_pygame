@@ -3,12 +3,11 @@ import sys
 import pygame
 
 from GLOBAL import *
-from Game import Game
 from Mesa import Mesa
 
 
 class Start:
-    def __init__(self, game: Game):
+    def __init__(self, game):
         self.game = game
         self.font = pygame.font.SysFont("impact", 50)
         self.font2 = pygame.font.SysFont("impact", 100)

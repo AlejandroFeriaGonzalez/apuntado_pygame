@@ -1,6 +1,8 @@
 import pygame
 
 from GLOBAL import *
+from GameStateManager import GameStateManager
+from Start import Start
 
 
 class Game:

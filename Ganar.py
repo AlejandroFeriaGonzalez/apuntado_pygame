@@ -1,13 +1,11 @@
 import sys
 from itertools import chain
 
-from Game import Game
-from Mesa import Mesa
 from funciones import *
 
 
 class Ganar:
-    def __init__(self, game: Game, mesa: Mesa):
+    def __init__(self, game, mesa):
         self.game = game
         self.mesa = mesa
         self.cartas_no_usadas = None
